@@ -9,7 +9,8 @@ sys.path.insert(0, dirname(dirname(__file__)))
 from utils.better_logging import logger
 from agent.job_sources.azure_queue import AzureQueueJobSource
 from agent.job_sources.local import LocalJobSource
-from agent.job_sources.stress_test import StressTestJobSource
+# StressTestJobSource is not included in this repository.
+# from agent.job_sources.stress_test import StressTestJobSource
 from agent.runner import JobRunner
 from agent.telemetry import tracer, SpanKind
 from agent.workload import Workload
@@ -20,7 +21,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run the challenge agent in local or azure mode.")
     parser.add_argument(
         "source",
-        choices=["local", "azure", "stress"],
+        choices=["local", "azure"],
         help="Mode to run the agent. 'local' for local job processing, 'azure' for Azure Queue processing.",
     )
     parser.add_argument(
@@ -48,7 +49,7 @@ async def main(source: str, enable_task_tracker: bool, no_op_workload: bool, unk
     sources = {
         "local": LocalJobSource,
         "azure": AzureQueueJobSource,
-        "stress": StressTestJobSource,
+        # "stress": StressTestJobSource,
     }
 
     if source not in sources:
