@@ -10,7 +10,8 @@ transformers
 pytest
 pytest-mock
 sentence_transformers
-onnxruntime-gpu
+onnxruntime; sys_platform == "darwin"
+onnxruntime-gpu; sys_platform == "linux" or sys_platform == "win32"
 tiktoken
 docopt
 python-dotenv
