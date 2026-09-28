@@ -238,14 +238,6 @@ class GeneralWorkload(Workload):
 
         defenses = config["defense"]
         print(f"DEFENSES {defenses}")
-        if not self.task_tracker and (check_task_tracker_in_defs(defenses) or "prompt_shield" in defenses):
-            logger.warning(
-                "Task tracker defense is not enabled. Removing it and prompt_shield from the list of supported defenses as they need GPUs."
-            )
-            defenses = remove_task_tracker_from_defs(defenses)
-            defenses.remove("prompt_shield")
-            if "all" in defenses:
-                defenses.remove("all")
 
         # In order to load LLMs that are specifically needed
         if COMPETITON_PHASE == "phase1":
@@ -254,6 +246,15 @@ class GeneralWorkload(Workload):
             defenses.remove("task_tracker_phi4")
         elif COMPETITON_PHASE == "phase2":
             defenses.remove("task_tracker")
+
+        if not self.task_tracker and (check_task_tracker_in_defs(defenses) or "prompt_shield" in defenses):
+            logger.warning(
+                "Task tracker defense is not enabled. Removing it and prompt_shield from the list of supported defenses as they need GPUs."
+            )
+            defenses = remove_task_tracker_from_defs(defenses)
+            defenses.remove("prompt_shield")
+            if "all" in defenses:
+                defenses.remove("all")
 
         llm_router = LLMRouter(config["llm_system_prompt"], config["llms"], defenses, config=config)
 
