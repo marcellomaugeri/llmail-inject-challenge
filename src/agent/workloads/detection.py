@@ -4,7 +4,7 @@ import requests
 import json
 from .task_tracker_utils import task_tracker_main, check_task_tracker_in_defs
 from .data_loader import load_task_tracker
-from openai import AzureOpenAI
+from openai import AzureOpenAI, OpenAI
 import os
 from .prompt_utils import LLM_JUDGE_PROMPT_PHASE1, LLM_JUDGE_PROMPT_PHASE2, format_emails
 from torch.nn.functional import softmax
@@ -40,11 +40,17 @@ class Detection_Defense:
         self.cb = cb
 
         if "llm_judge" in self.detection_method:
-            self.client = AzureOpenAI(
-                azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-                api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-                api_version="2023-05-15",
-            )
+            azure_api_key = os.getenv("AZURE_OPENAI_API_KEY")
+            if azure_api_key:
+                self.client = AzureOpenAI(
+                    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+                    api_key=azure_api_key,
+                    api_version="2023-05-15",
+                )
+            elif os.getenv("OPENAI_API_KEY"):
+                self.client = OpenAI()
+            else:
+                raise ValueError("Set AZURE_OPENAI_API_KEY or OPENAI_API_KEY to use llm_judge.")
 
         self.prompt_shield_model = prompt_shield_model
         self.prompt_shield_threshold = config["prompt_shield_threshold"]

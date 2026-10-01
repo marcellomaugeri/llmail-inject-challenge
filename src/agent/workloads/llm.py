@@ -5,7 +5,7 @@ import json
 import torch
 import logging
 import numpy as np
-from openai import AzureOpenAI
+from openai import AzureOpenAI, OpenAI
 from transformers import AutoTokenizer, pipeline, AutoModelForCausalLM, AutoConfig
 from azure.ai.inference import ChatCompletionsClient
 from azure.core.credentials import AzureKeyCredential
@@ -191,11 +191,19 @@ class GPTLLM(LLM):
 
     def __init__(self, llm_name: str, config: dict):
         super().__init__(llm_name, config)
-        self.client = AzureOpenAI(
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            api_version="2024-02-15-preview",
-        )
+        azure_api_key = os.getenv("AZURE_OPENAI_API_KEY")
+        if azure_api_key:
+            self.client = AzureOpenAI(
+                azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+                api_key=azure_api_key,
+                api_version="2024-02-15-preview",
+            )
+            self.api_model = llm_name
+        elif os.getenv("OPENAI_API_KEY"):
+            self.client = OpenAI()
+            self.api_model = "gpt-4o-mini"
+        else:
+            raise ValueError("Set AZURE_OPENAI_API_KEY or OPENAI_API_KEY to use GPTLLM.")
 
     def call_model(self, system_prompt: str, query: str, emails: str) -> LLMResponse:
         """Calls the LLM model with the given messages.
@@ -231,7 +239,7 @@ class GPTLLM(LLM):
         ]
 
         response = self.client.chat.completions.create(
-            model=self.llm_name,
+            model=self.api_model,
             messages=messages,
             max_tokens=self.max_new_tokens,
             tools=self.tools_config,
@@ -266,11 +274,7 @@ class Phi3LLM(LLM):
 
     def __init__(self, llm_name, config: dict):
         super().__init__(llm_name, config)
-        self.open_source_client = ChatCompletionsClient(
-            endpoint=os.getenv("AZURE_OPEN_SOURCE_ENDPOINT"),
-            credential=AzureKeyCredential(os.getenv("AZURE_OPEN_SOURCE_API_KEY")),
-            seed=100,
-        )
+        self.open_source_client = None
         self.llm_system_prompt_tool = config["llm_system_prompt_tool"]
         assert len(config["llm_tools"]) <= 1, "Phi3 only supports one tool."
 
@@ -284,6 +288,12 @@ class Phi3LLM(LLM):
         messages = [{"role": "user", "content": full_prompt}]
 
         payload = {"messages": messages, "max_tokens": self.max_new_tokens, "top_p": self.top_p}
+        if self.open_source_client is None:
+            self.open_source_client = ChatCompletionsClient(
+                endpoint=os.getenv("AZURE_OPEN_SOURCE_ENDPOINT"),
+                credential=AzureKeyCredential(os.getenv("AZURE_OPEN_SOURCE_API_KEY")),
+                seed=100,
+            )
         response = self.open_source_client.complete(payload, seed=100)
 
         if not response.choices:
