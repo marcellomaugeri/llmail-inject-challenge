@@ -48,6 +48,15 @@ This section describes how the different entities interact with simulated LLMail
 
 - **Defenses.** The LLMail service is equipped with several prompt injection defenses that run whenever the LLM is used (step 5 in the figure). In addition, the name of the API for sending an email (i.e., the attacker’s goal) is not disclosed to the attacker and the LLMail system will filter out the API name from any received emails.
 
+## Getting started
+
+### Install dependencies
+
+```bash
+uv venv --python 3.11
+uv pip install -r requirements.txt
+```
+
 ## Challenge Scenarios and Levels
 
 The challenge consists of four scenarios that differ in terms of the retrieval configuration and the goal of the attack, as described below. Each scenario is further paired with different configurations of defenses and LLMs (described in the next sections).
